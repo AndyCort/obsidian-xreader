@@ -26,6 +26,14 @@ export default class XReaderPlugin extends Plugin {
             (leaf: WorkspaceLeaf) => new XReaderView(leaf, this)
         );
 
+        try {
+            // Unregister any existing view handling epub (e.g. from Obsidian or other plugins)
+            // @ts-ignore: Obsidian internal API
+            this.app.viewRegistry.unregisterExtensions(["epub"]);
+        } catch (e) {
+            console.log("No existing epub extension to unregister.", e);
+        }
+
         this.registerExtensions(["epub"], VIEW_TYPE_XREADER);
 
         this.addSettingTab(new XReaderSettingTab(this.app, this));
