@@ -62,25 +62,31 @@ export class XReaderView extends ItemView {
             spread: "none"
         });
 
+        this.currentFontSize = this.plugin.settings.defaultFontSize;
+
         // Apply Theme
-        this.rendition.themes.register("obsidian", {
-            "body": {
-                "background": "transparent !important",
-                "color": "var(--text-normal) !important",
-                "font-family": "var(--font-text) !important",
-                "line-height": "1.6 !important"
-            },
-            "p": {
-                "color": "var(--text-normal) !important",
-            },
-            "h1, h2, h3, h4, h5, h6": {
-                "color": "var(--text-normal) !important",
-            },
-            "a": {
-                "color": "var(--text-accent) !important",
-            }
-        });
-        this.rendition.themes.select("obsidian");
+        if (this.plugin.settings.themeMatch) {
+            this.rendition.themes.register("obsidian", {
+                "body": {
+                    "background": "transparent !important",
+                    "color": "var(--text-normal) !important",
+                    "font-family": "var(--font-text) !important",
+                    "line-height": "1.6 !important"
+                },
+                "p": {
+                    "color": "var(--text-normal) !important",
+                },
+                "h1, h2, h3, h4, h5, h6": {
+                    "color": "var(--text-normal) !important",
+                },
+                "a": {
+                    "color": "var(--text-accent) !important",
+                }
+            });
+            this.rendition.themes.select("obsidian");
+        }
+
+        this.rendition.themes.fontSize(`${this.currentFontSize}%`);
 
         // Listen to progress
         this.rendition.on("relocated", (location: Location) => {

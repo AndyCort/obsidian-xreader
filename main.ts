@@ -1,12 +1,16 @@
-import { Plugin, WorkspaceLeaf } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, WorkspaceLeaf } from 'obsidian';
 import { XReaderView, VIEW_TYPE_XREADER } from './view';
 
 interface XReaderSettings {
     progress: Record<string, string>;
+    defaultFontSize: number;
+    themeMatch: boolean;
 }
 
 const DEFAULT_SETTINGS: XReaderSettings = {
-    progress: {}
+    progress: {},
+    defaultFontSize: 100,
+    themeMatch: true
 }
 
 export default class XReaderPlugin extends Plugin {
@@ -23,6 +27,8 @@ export default class XReaderPlugin extends Plugin {
         );
 
         this.registerExtensions(["epub"], VIEW_TYPE_XREADER);
+
+        this.addSettingTab(new XReaderSettingTab(this.app, this));
     }
 
     onunload() {
@@ -35,5 +41,42 @@ export default class XReaderPlugin extends Plugin {
 
     async saveSettings() {
         await this.saveData(this.settings);
+    }
+}
+
+class XReaderSettingTab extends PluginSettingTab {
+    plugin: XReaderPlugin;
+
+    constructor(app: App, plugin: XReaderPlugin) {
+        super(app, plugin);
+        this.plugin = plugin;
+    }
+
+    display(): void {
+        const { containerEl } = this;
+
+        containerEl.empty();
+
+        new Setting(containerEl)
+            .setName('Default Font Size')
+            .setDesc('Set the default font size (percentage) for reading.')
+            .addSlider(slider => slider
+                .setLimits(50, 200, 10)
+                .setValue(this.plugin.settings.defaultFontSize)
+                .setDynamicTooltip()
+                .onChange(async (value) => {
+                    this.plugin.settings.defaultFontSize = value;
+                    await this.plugin.saveSettings();
+                }));
+
+        new Setting(containerEl)
+            .setName('Match Obsidian Theme')
+            .setDesc('Automatically match the e-book theme to Obsidian\'s Dark or Light mode.')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.themeMatch)
+                .onChange(async (value) => {
+                    this.plugin.settings.themeMatch = value;
+                    await this.plugin.saveSettings();
+                }));
     }
 }
