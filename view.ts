@@ -81,12 +81,22 @@ export class XReaderView extends FileView {
                     return `
                     :root {
                         --text-normal: ${bodyStyle.getPropertyValue('--text-normal')};
+                        --text-muted: ${bodyStyle.getPropertyValue('--text-muted')};
+                        --text-faint: ${bodyStyle.getPropertyValue('--text-faint')};
+                        --text-accent: ${bodyStyle.getPropertyValue('--text-accent')};
                         --background-primary: ${bodyStyle.getPropertyValue('--background-primary')};
                         --background-secondary: ${bodyStyle.getPropertyValue('--background-secondary')};
+                        --interactive-accent: ${bodyStyle.getPropertyValue('--interactive-accent')};
+                        --text-selection: ${bodyStyle.getPropertyValue('--text-selection')};
                         --font-text: ${bodyStyle.getPropertyValue('--font-text')};
-                        --text-accent: ${bodyStyle.getPropertyValue('--text-accent')};
-                        --text-muted: ${bodyStyle.getPropertyValue('--text-muted')};
+                        --font-monospace: ${bodyStyle.getPropertyValue('--font-monospace')};
                         --hr-color: ${bodyStyle.getPropertyValue('--hr-color')};
+                        --blockquote-border-color: ${bodyStyle.getPropertyValue('--blockquote-border-color')};
+                        --code-background: ${bodyStyle.getPropertyValue('--code-background')};
+                        --code-normal: ${bodyStyle.getPropertyValue('--code-normal')};
+                    }
+                    ::selection {
+                        background-color: var(--text-selection) !important;
                     }
                 `;
                 };
@@ -108,24 +118,74 @@ export class XReaderView extends FileView {
                     "body": {
                         "background": "var(--background-primary) !important",
                         "color": "var(--text-normal) !important",
-                        "font-family": "var(--font-text), sans-serif !important",
+                        "font-family": "var(--font-text), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important",
                         "line-height": "1.6 !important",
-                        "padding": "0 5% !important"
+                        "padding": "20px 10% !important",
+                        "font-size": "1em !important"
                     },
                     "p": {
                         "color": "var(--text-normal) !important",
+                        "margin-bottom": "1.2em !important"
                     },
                     "h1, h2, h3, h4, h5, h6": {
                         "color": "var(--text-normal) !important",
-                        "border-bottom": "1px solid var(--hr-color) !important"
+                        "font-weight": "600 !important",
+                        "line-height": "1.3 !important",
+                        "margin-top": "1.5em !important",
+                        "margin-bottom": "0.5em !important"
                     },
+                    "h1": { "font-size": "1.8em !important", "border-bottom": "1px solid var(--hr-color) !important", "padding-bottom": "0.3em !important" },
+                    "h2": { "font-size": "1.5em !important", "border-bottom": "1px solid var(--hr-color) !important", "padding-bottom": "0.2em !important" },
+                    "h3": { "font-size": "1.3em !important" },
                     "a": {
                         "color": "var(--text-accent) !important",
+                        "text-decoration": "none !important"
+                    },
+                    "a:hover": {
+                        "text-decoration": "underline !important"
                     },
                     "hr": {
                         "background-color": "var(--hr-color) !important",
                         "height": "1px !important",
-                        "border": "none !important"
+                        "border": "none !important",
+                        "margin": "2em 0 !important"
+                    },
+                    "blockquote": {
+                        "border-left": "4px solid var(--blockquote-border-color) !important",
+                        "margin": "1em 0 !important",
+                        "padding": "0.5em 1em !important",
+                        "color": "var(--text-muted) !important",
+                        "background-color": "var(--background-secondary) !important"
+                    },
+                    "code": {
+                        "background-color": "var(--code-background) !important",
+                        "color": "var(--code-normal) !important",
+                        "padding": "0.2em 0.4em !important",
+                        "border-radius": "3px !important",
+                        "font-family": "var(--font-monospace) !important",
+                        "font-size": "0.9em !important"
+                    },
+                    "pre": {
+                        "background-color": "var(--code-background) !important",
+                        "padding": "1em !important",
+                        "border-radius": "4px !important",
+                        "overflow-x": "auto !important",
+                        "margin": "1em 0 !important"
+                    },
+                    "pre code": {
+                        "padding": "0 !important",
+                        "background-color": "transparent !important"
+                    },
+                    "ul, ol": {
+                        "padding-left": "2em !important",
+                        "margin-bottom": "1em !important"
+                    },
+                    "li": {
+                        "margin-bottom": "0.5em !important"
+                    },
+                    "img": {
+                        "max-width": "100% !important",
+                        "height": "auto !important"
                     }
                 });
                 this.rendition.themes.select("obsidian");
