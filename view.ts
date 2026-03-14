@@ -23,8 +23,45 @@ export class XReaderView extends FileView {
     setupActions() {
         this.addAction('arrow-left', 'Previous Page', () => this.rendition?.prev());
         this.addAction('arrow-right', 'Next Page', () => this.rendition?.next());
+        this.addAction('list', 'Table of Contents', () => this.showTOC());
         this.addAction('minus', 'Decrease Font', () => this.changeFontSize(-10));
         this.addAction('plus', 'Increase Font', () => this.changeFontSize(10));
+    }
+
+    async showTOC() {
+        if (!this.book || !this.book.navigation) return;
+
+        const { Menu } = require('obsidian'); // Workaround if not available in top-level
+        const menu = new Menu();
+
+        const toc = this.book.navigation.toc;
+
+        const addTocItems = (items: any[], level = 0) => {
+            items.forEach(item => {
+                const prefix = "  ".repeat(level);
+                menu.addItem((menuItem: any) => {
+                    menuItem.setTitle(prefix + item.label.trim())
+                        .onClick(() => {
+                            this.rendition?.display(item.href);
+                        });
+                });
+                if (item.subitems && item.subitems.length > 0) {
+                    addTocItems(item.subitems, level + 1);
+                }
+            });
+        };
+
+        addTocItems(toc);
+
+        // Show menu below the action button
+        // @ts-ignore
+        const actionEl = this.contentEl.parentElement?.querySelector('.view-actions [aria-label="Table of Contents"]');
+        if (actionEl) {
+            const rect = actionEl.getBoundingClientRect();
+            menu.showAtPosition({ x: rect.left, y: rect.bottom });
+        } else {
+            menu.showAtCursor();
+        }
     }
 
     changeFontSize(delta: number) {
