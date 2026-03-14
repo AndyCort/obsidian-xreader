@@ -1,16 +1,26 @@
 /* XReader Plugin Styles */
-.xreader-container {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
+.xreader-wrapper {
+	display: flex;
+	justify-content: center;
+	align-items: flex-start;
 	width: 100%;
 	height: 100%;
-	display: flex;
-	flex: 1 1 100%;
-	flex-direction: column;
-	overflow: hidden;
-	padding: 0;
-	margin: 0;
+	overflow-y: auto;
+	background-color: var(--background-secondary);
+}
+
+.xreader-container {
+	width: 100%;
+	max-width: 800px;
+	height: 100%;
+	background-color: var(--background-primary);
+	box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+	margin: 0 auto;
+	position: relative;
+}
+
+/* Hide scrollbars inside the iframe container if necessary, 
+   the wrapper handles the main scroll */
+.xreader-container iframe {
+	border: none !important;
 }

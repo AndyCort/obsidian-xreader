@@ -21,8 +21,8 @@ export class XReaderView extends FileView {
     }
 
     setupActions() {
-        this.addAction('arrow-left', 'Previous Page', () => this.rendition?.prev());
-        this.addAction('arrow-right', 'Next Page', () => this.rendition?.next());
+        this.addAction('arrow-left', 'Next Page', () => this.rendition?.next());
+        this.addAction('arrow-right', 'Previous Page', () => this.rendition?.prev());
         this.addAction('search', 'Increase Font', () => this.changeFontSize(10));
         this.addAction('minus', 'Decrease Font', () => this.changeFontSize(-10));
     }
@@ -58,14 +58,16 @@ export class XReaderView extends FileView {
         const debugDiv = container.createDiv({ cls: 'xreader-debug', text: `Loading ${file.basename}... (Buffer size: ${buffer.byteLength} bytes)` });
         debugDiv.setAttribute("style", "padding: 10px; color: orange; z-index: 100; position: absolute; font-weight: bold;");
 
-        const readerDiv = container.createDiv({ cls: 'xreader-container' });
+        const readerWrapper = container.createDiv({ cls: 'xreader-wrapper' });
+        const readerDiv = readerWrapper.createDiv({ cls: 'xreader-container' });
 
         try {
             this.book = ePub(buffer);
             this.rendition = this.book.renderTo(readerDiv, {
                 width: "100%",
                 height: "100%",
-                spread: "none"
+                flow: "scrolled",
+                manager: "continuous"
             });
 
             this.currentFontSize = this.plugin.settings.defaultFontSize;
