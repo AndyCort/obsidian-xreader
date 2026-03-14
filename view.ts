@@ -70,23 +70,62 @@ export class XReaderView extends FileView {
 
             this.currentFontSize = this.plugin.settings.defaultFontSize;
 
+            // Inject Obsidian CSS variables into the iframe
+            this.rendition.hooks.content.register((contents: any) => {
+                const doc = contents.window.document;
+                const styleEl = doc.createElement("style");
+
+                // Function to get current Obsidian styles
+                const getObsidianStyles = () => {
+                    const bodyStyle = getComputedStyle(document.body);
+                    return `
+                    :root {
+                        --text-normal: ${bodyStyle.getPropertyValue('--text-normal')};
+                        --background-primary: ${bodyStyle.getPropertyValue('--background-primary')};
+                        --background-secondary: ${bodyStyle.getPropertyValue('--background-secondary')};
+                        --font-text: ${bodyStyle.getPropertyValue('--font-text')};
+                        --text-accent: ${bodyStyle.getPropertyValue('--text-accent')};
+                        --text-muted: ${bodyStyle.getPropertyValue('--text-muted')};
+                        --hr-color: ${bodyStyle.getPropertyValue('--hr-color')};
+                    }
+                `;
+                };
+
+                styleEl.textContent = getObsidianStyles();
+                doc.head.appendChild(styleEl);
+
+                // Update styles when Obsidian theme changes
+                this.plugin.registerEvent(
+                    this.app.workspace.on('css-change', () => {
+                        styleEl.textContent = getObsidianStyles();
+                    })
+                );
+            });
+
             // Apply Theme
             if (this.plugin.settings.themeMatch) {
                 this.rendition.themes.register("obsidian", {
                     "body": {
-                        "background": "transparent !important",
+                        "background": "var(--background-primary) !important",
                         "color": "var(--text-normal) !important",
-                        "font-family": "var(--font-text) !important",
-                        "line-height": "1.6 !important"
+                        "font-family": "var(--font-text), sans-serif !important",
+                        "line-height": "1.6 !important",
+                        "padding": "0 5% !important"
                     },
                     "p": {
                         "color": "var(--text-normal) !important",
                     },
                     "h1, h2, h3, h4, h5, h6": {
                         "color": "var(--text-normal) !important",
+                        "border-bottom": "1px solid var(--hr-color) !important"
                     },
                     "a": {
                         "color": "var(--text-accent) !important",
+                    },
+                    "hr": {
+                        "background-color": "var(--hr-color) !important",
+                        "height": "1px !important",
+                        "border": "none !important"
                     }
                 });
                 this.rendition.themes.select("obsidian");

@@ -1,6 +1,6 @@
 {
   "name": "obsidian-xreader",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Read e-books directly in Obsidian",
   "main": "main.js",
   "scripts": {
