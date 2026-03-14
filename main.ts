@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, WorkspaceLeaf } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, WorkspaceLeaf, TFile } from 'obsidian';
 import { XReaderView, VIEW_TYPE_XREADER } from './view';
 
 interface XReaderSettings {
@@ -39,6 +39,31 @@ export default class XReaderPlugin extends Plugin {
         this.registerExtensions(["epub"], VIEW_TYPE_XREADER);
 
         this.addSettingTab(new XReaderSettingTab(this.app, this));
+
+        // Register deep link handler: obsidian://xreader?path=...&cfi=...
+        this.registerObsidianProtocolHandler("xreader", async (data) => {
+            const path = data.path;
+            const cfi = data.cfi;
+
+            if (path) {
+                const file = this.app.vault.getAbstractFileByPath(path);
+                if (file instanceof TFile) {
+                    const leaves = this.app.workspace.getLeavesOfType(VIEW_TYPE_XREADER);
+                    let leaf = leaves.find(l => (l.view as XReaderView).file?.path === path);
+
+                    if (!leaf) {
+                        leaf = this.app.workspace.getLeaf('tab');
+                        await leaf.openFile(file);
+                    } else {
+                        this.app.workspace.setActiveLeaf(leaf);
+                    }
+
+                    if (cfi && leaf.view instanceof XReaderView) {
+                        leaf.view.rendition?.display(cfi);
+                    }
+                }
+            }
+        });
     }
 
     onunload() {

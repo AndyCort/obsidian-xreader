@@ -21,10 +21,10 @@ export class XReaderView extends FileView {
     }
 
     setupActions() {
-        this.addAction('arrow-left', 'Next Page', () => this.rendition?.next());
-        this.addAction('arrow-right', 'Previous Page', () => this.rendition?.prev());
-        this.addAction('search', 'Increase Font', () => this.changeFontSize(10));
+        this.addAction('arrow-left', 'Previous Page', () => this.rendition?.prev());
+        this.addAction('arrow-right', 'Next Page', () => this.rendition?.next());
         this.addAction('minus', 'Decrease Font', () => this.changeFontSize(-10));
+        this.addAction('plus', 'Increase Font', () => this.changeFontSize(10));
     }
 
     changeFontSize(delta: number) {
@@ -217,6 +217,47 @@ export class XReaderView extends FileView {
             }
 
             this.rendition.themes.fontSize(`${this.currentFontSize}%`);
+
+            // Listen to selection
+            this.rendition.on("selected", (cfiRange: string, contents: any) => {
+                const range = contents.range(cfiRange);
+                const selection = contents.window.getSelection();
+                const selectedText = selection.toString();
+
+                if (selectedText) {
+                    // Create a small floating button/menu near the selection
+                    const rect = range.getBoundingClientRect();
+                    const menu = document.body.createDiv({ cls: 'xreader-selection-menu' });
+                    menu.style.position = 'fixed';
+                    menu.style.top = `${rect.top - 40}px`;
+                    menu.style.left = `${rect.left + rect.width / 2 - 50}px`;
+                    menu.style.zIndex = '1000';
+
+                    const copyBtn = menu.createEl('button', { text: 'Copy as Quote', cls: 'mod-cta' });
+                    copyBtn.onclick = () => {
+                        const bookPath = this.file?.path || "";
+                        const quote = `> ${selectedText.replace(/\n/g, '\n> ')}\n\n[Reference](${encodeURI(`obsidian://xreader?path=${bookPath}&cfi=${cfiRange}`)})`;
+
+                        navigator.clipboard.writeText(quote).then(() => {
+                            // @ts-ignore
+                            new Notice("Quote copied to clipboard!");
+                            menu.remove();
+                            this.rendition?.annotations.add("highlight", cfiRange, {}, (e: any) => {
+                                console.log("highlight clicked", e.target);
+                            }, "hl", { "fill": "yellow", "fill-opacity": "0.3" });
+                        });
+                    };
+
+                    // Remove menu when clicking elsewhere
+                    const removeMenu = (e: MouseEvent) => {
+                        if (!menu.contains(e.target as Node)) {
+                            menu.remove();
+                            document.removeEventListener('mousedown', removeMenu);
+                        }
+                    };
+                    document.addEventListener('mousedown', removeMenu);
+                }
+            });
 
             // Listen to progress
             this.rendition.on("relocated", (location: Location) => {
