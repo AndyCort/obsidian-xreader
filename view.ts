@@ -1,16 +1,18 @@
-import { ItemView, WorkspaceLeaf, TFile } from 'obsidian';
+import { FileView, WorkspaceLeaf, TFile } from 'obsidian';
 import ePub, { Book, Rendition, Location } from 'epubjs';
 import XReaderPlugin from './main';
 
 export const VIEW_TYPE_XREADER = "xreader-view";
 
-export class XReaderView extends ItemView {
+export class XReaderView extends FileView {
     plugin: XReaderPlugin;
     book: Book | null = null;
     rendition: Rendition | null = null;
-    file: TFile | null = null;
     actionEl: HTMLElement;
     currentFontSize: number = 100;
+
+    // Tell Obsidian this view always requires a file to function properly
+    allowNoFile: boolean = false;
 
     constructor(leaf: WorkspaceLeaf, plugin: XReaderPlugin) {
         super(leaf);
@@ -45,7 +47,6 @@ export class XReaderView extends ItemView {
     }
 
     async onLoadFile(file: TFile): Promise<void> {
-        this.file = file;
         this.leaf.tabHeaderInnerTitleEl.innerText = file.basename;
 
         const url = this.app.vault.getResourcePath(file);
@@ -152,5 +153,10 @@ export class XReaderView extends ItemView {
             this.book.destroy();
             this.book = null;
         }
+    }
+
+    // Required by FileView to confirm which files it can render
+    canAcceptExtension(extension: string) {
+        return extension === "epub";
     }
 }
