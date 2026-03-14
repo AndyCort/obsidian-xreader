@@ -55,7 +55,7 @@ export class XReaderView extends ItemView {
 
         const readerDiv = container.createDiv({ cls: 'xreader-container' });
 
-        this.book = ePub(buffer);
+        this.book = ePub(buffer, { encoding: "binary" });
         this.rendition = this.book.renderTo(readerDiv, {
             width: "100%",
             height: "100%",
@@ -97,11 +97,18 @@ export class XReaderView extends ItemView {
         });
 
         // Load saved progress
-        const savedCfi = this.plugin.settings.progress[file.path];
-        if (savedCfi) {
-            await this.rendition.display(savedCfi);
-        } else {
-            await this.rendition.display();
+        try {
+            const savedCfi = this.plugin.settings.progress[file.path];
+            if (savedCfi) {
+                await this.rendition.display(savedCfi);
+            } else {
+                await this.rendition.display();
+            }
+            console.log("XReader: EPUB rendered successfully.");
+        } catch (error) {
+            console.error("XReader: Failed to display EPUB:", error);
+            const errorDiv = container.createDiv({ cls: 'xreader-error' });
+            errorDiv.setText(`Error loading EPUB: ${error.message || error}`);
         }
     }
 
