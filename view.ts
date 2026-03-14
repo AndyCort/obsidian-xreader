@@ -84,6 +84,29 @@ export class XReaderView extends ItemView {
                 }
             });
             this.rendition.themes.select("obsidian");
+        } else {
+            const customThemes: Record<string, any> = {
+                light: {
+                    body: { background: "#ffffff !important", color: "#333333 !important" },
+                    p: { color: "#333333 !important" },
+                    "h1, h2, h3, h4, h5, h6": { color: "#333333 !important" },
+                    a: { color: "#0066cc !important" }
+                },
+                dark: {
+                    body: { background: "#1e1e1e !important", color: "#e0e0e0 !important" },
+                    p: { color: "#e0e0e0 !important" },
+                    "h1, h2, h3, h4, h5, h6": { color: "#e0e0e0 !important" },
+                    a: { color: "#4da6ff !important" }
+                },
+                sepia: {
+                    body: { background: "#f4ecd8 !important", color: "#5b4636 !important" },
+                    p: { color: "#5b4636 !important" },
+                    "h1, h2, h3, h4, h5, h6": { color: "#5b4636 !important" },
+                    a: { color: "#8b6b53 !important" }
+                }
+            };
+            this.rendition.themes.register("custom", customThemes[this.plugin.settings.themeColor] || customThemes.light);
+            this.rendition.themes.select("custom");
         }
 
         this.rendition.themes.fontSize(`${this.currentFontSize}%`);

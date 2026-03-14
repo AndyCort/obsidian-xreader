@@ -5,12 +5,14 @@ interface XReaderSettings {
     progress: Record<string, string>;
     defaultFontSize: number;
     themeMatch: boolean;
+    themeColor: string;
 }
 
 const DEFAULT_SETTINGS: XReaderSettings = {
     progress: {},
     defaultFontSize: 100,
-    themeMatch: true
+    themeMatch: true,
+    themeColor: 'light'
 }
 
 export default class XReaderPlugin extends Plugin {
@@ -84,6 +86,18 @@ class XReaderSettingTab extends PluginSettingTab {
                 .setValue(this.plugin.settings.themeMatch)
                 .onChange(async (value) => {
                     this.plugin.settings.themeMatch = value;
+                    await this.plugin.saveSettings();
+                }));
+        new Setting(containerEl)
+            .setName('Background Theme')
+            .setDesc('Select the background theme (only applies if "Match Obsidian Theme" is off).')
+            .addDropdown(dropdown => dropdown
+                .addOption('light', 'Light')
+                .addOption('dark', 'Dark')
+                .addOption('sepia', 'Sepia')
+                .setValue(this.plugin.settings.themeColor)
+                .onChange(async (value) => {
+                    this.plugin.settings.themeColor = value;
                     await this.plugin.saveSettings();
                 }));
     }
