@@ -48,90 +48,102 @@ export class XReaderView extends ItemView {
         this.file = file;
         this.leaf.tabHeaderInnerTitleEl.innerText = file.basename;
 
+        const url = this.app.vault.getResourcePath(file);
         const buffer = await this.app.vault.readBinary(file);
 
         const container = this.contentEl;
         container.empty();
 
+        const debugDiv = container.createDiv({ cls: 'xreader-debug', text: `Loading ${file.basename}... (Buffer size: ${buffer.byteLength} bytes)` });
+        debugDiv.setAttribute("style", "padding: 10px; color: orange; z-index: 100; position: absolute; font-weight: bold;");
+
         const readerDiv = container.createDiv({ cls: 'xreader-container' });
 
-        this.book = ePub(buffer, { encoding: "binary" });
-        this.rendition = this.book.renderTo(readerDiv, {
-            width: "100%",
-            height: "100%",
-            spread: "none"
-        });
+        try {
+            this.book = ePub(buffer);
+            this.rendition = this.book.renderTo(readerDiv, {
+                width: "100%",
+                height: "100%",
+                spread: "none"
+            });
 
-        this.currentFontSize = this.plugin.settings.defaultFontSize;
+            this.currentFontSize = this.plugin.settings.defaultFontSize;
 
-        // Apply Theme
-        if (this.plugin.settings.themeMatch) {
-            this.rendition.themes.register("obsidian", {
-                "body": {
-                    "background": "transparent !important",
-                    "color": "var(--text-normal) !important",
-                    "font-family": "var(--font-text) !important",
-                    "line-height": "1.6 !important"
-                },
-                "p": {
-                    "color": "var(--text-normal) !important",
-                },
-                "h1, h2, h3, h4, h5, h6": {
-                    "color": "var(--text-normal) !important",
-                },
-                "a": {
-                    "color": "var(--text-accent) !important",
+            // Apply Theme
+            if (this.plugin.settings.themeMatch) {
+                this.rendition.themes.register("obsidian", {
+                    "body": {
+                        "background": "transparent !important",
+                        "color": "var(--text-normal) !important",
+                        "font-family": "var(--font-text) !important",
+                        "line-height": "1.6 !important"
+                    },
+                    "p": {
+                        "color": "var(--text-normal) !important",
+                    },
+                    "h1, h2, h3, h4, h5, h6": {
+                        "color": "var(--text-normal) !important",
+                    },
+                    "a": {
+                        "color": "var(--text-accent) !important",
+                    }
+                });
+                this.rendition.themes.select("obsidian");
+            } else {
+                const customThemes: Record<string, any> = {
+                    light: {
+                        body: { background: "#ffffff !important", color: "#333333 !important" },
+                        p: { color: "#333333 !important" },
+                        "h1, h2, h3, h4, h5, h6": { color: "#333333 !important" },
+                        a: { color: "#0066cc !important" }
+                    },
+                    dark: {
+                        body: { background: "#1e1e1e !important", color: "#e0e0e0 !important" },
+                        p: { color: "#e0e0e0 !important" },
+                        "h1, h2, h3, h4, h5, h6": { color: "#e0e0e0 !important" },
+                        a: { color: "#4da6ff !important" }
+                    },
+                    sepia: {
+                        body: { background: "#f4ecd8 !important", color: "#5b4636 !important" },
+                        p: { color: "#5b4636 !important" },
+                        "h1, h2, h3, h4, h5, h6": { color: "#5b4636 !important" },
+                        a: { color: "#8b6b53 !important" }
+                    }
+                };
+                this.rendition.themes.register("custom", customThemes[this.plugin.settings.themeColor] || customThemes.light);
+                this.rendition.themes.select("custom");
+            }
+
+            this.rendition.themes.fontSize(`${this.currentFontSize}%`);
+
+            // Listen to progress
+            this.rendition.on("relocated", (location: Location) => {
+                if (this.file && location && location.start) {
+                    this.plugin.settings.progress[this.file.path] = location.start.cfi;
+                    this.plugin.saveSettings();
                 }
             });
-            this.rendition.themes.select("obsidian");
-        } else {
-            const customThemes: Record<string, any> = {
-                light: {
-                    body: { background: "#ffffff !important", color: "#333333 !important" },
-                    p: { color: "#333333 !important" },
-                    "h1, h2, h3, h4, h5, h6": { color: "#333333 !important" },
-                    a: { color: "#0066cc !important" }
-                },
-                dark: {
-                    body: { background: "#1e1e1e !important", color: "#e0e0e0 !important" },
-                    p: { color: "#e0e0e0 !important" },
-                    "h1, h2, h3, h4, h5, h6": { color: "#e0e0e0 !important" },
-                    a: { color: "#4da6ff !important" }
-                },
-                sepia: {
-                    body: { background: "#f4ecd8 !important", color: "#5b4636 !important" },
-                    p: { color: "#5b4636 !important" },
-                    "h1, h2, h3, h4, h5, h6": { color: "#5b4636 !important" },
-                    a: { color: "#8b6b53 !important" }
+
+            // Load saved progress
+            try {
+                debugDiv.innerText += "\nCalling rendition.display()...";
+                const savedCfi = this.plugin.settings.progress[file.path];
+                if (savedCfi) {
+                    await this.rendition.display(savedCfi);
+                } else {
+                    await this.rendition.display();
                 }
-            };
-            this.rendition.themes.register("custom", customThemes[this.plugin.settings.themeColor] || customThemes.light);
-            this.rendition.themes.select("custom");
-        }
-
-        this.rendition.themes.fontSize(`${this.currentFontSize}%`);
-
-        // Listen to progress
-        this.rendition.on("relocated", (location: Location) => {
-            if (this.file && location && location.start) {
-                this.plugin.settings.progress[this.file.path] = location.start.cfi;
-                this.plugin.saveSettings();
+                debugDiv.innerText += "\nEPUB rendered successfully!";
+                setTimeout(() => { debugDiv.style.display = 'none'; }, 3000);
+            } catch (error) {
+                console.error("XReader: Failed to display EPUB:", error);
+                debugDiv.style.color = 'red';
+                debugDiv.innerText += `\nError loading EPUB: ${error.message || error}`;
             }
-        });
-
-        // Load saved progress
-        try {
-            const savedCfi = this.plugin.settings.progress[file.path];
-            if (savedCfi) {
-                await this.rendition.display(savedCfi);
-            } else {
-                await this.rendition.display();
-            }
-            console.log("XReader: EPUB rendered successfully.");
-        } catch (error) {
-            console.error("XReader: Failed to display EPUB:", error);
-            const errorDiv = container.createDiv({ cls: 'xreader-error' });
-            errorDiv.setText(`Error loading EPUB: ${error.message || error}`);
+        } catch (globalError) {
+            console.error("XReader: Global EPUB error:", globalError);
+            debugDiv.style.color = 'red';
+            debugDiv.innerText += `\nGlobal Exception: ${globalError.message || globalError}`;
         }
     }
 
