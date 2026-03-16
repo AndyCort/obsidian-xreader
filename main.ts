@@ -42,7 +42,7 @@ export default class XReaderPlugin extends Plugin {
 
         // Register deep link handler: obsidian://xreader?path=...&cfi=...
         this.registerObsidianProtocolHandler("xreader", async (data) => {
-            const path = data.bookPath || data.path;
+            const path = data.bookPath;
             const cfi = data.cfi;
 
             if (path) {
