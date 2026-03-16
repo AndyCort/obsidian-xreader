@@ -10,6 +10,7 @@ export class XReaderView extends FileView {
     rendition: Rendition | null = null;
     actionEl: HTMLElement;
     currentFontSize: number = 100;
+    currentSelection: { cfiRange: string; text: string } | null = null;
 
     // Tell Obsidian this view always requires a file to function properly
     allowNoFile: boolean = false;
@@ -21,12 +22,44 @@ export class XReaderView extends FileView {
     }
 
     setupActions() {
-        this.addAction('arrow-left', 'Previous Page', () => this.rendition?.prev());
-        this.addAction('arrow-right', 'Next Page', () => this.rendition?.next());
+        // 越想显示在右边的，越要写在代码前面
+        this.addAction('quote-glyph', 'Copy as Quote', () => this.handleQuote());
         this.addAction('list', 'Table of Contents', () => this.showTOC());
-        this.addAction('minus', 'Decrease Font', () => this.changeFontSize(-10));
-        this.addAction('plus', 'Increase Font', () => this.changeFontSize(10));
+        this.addAction('arrow-right', 'Next Page', () => this.rendition?.next());
+        this.addAction('arrow-left', 'Previous Page', () => this.rendition?.prev());
     }
+
+    handleQuote() {
+        if (!this.currentSelection || !this.currentSelection.text) {
+            // @ts-ignore
+            new Notice("No text selected!");
+            return;
+        }
+
+        const { cfiRange, text } = this.currentSelection;
+        const bookPath = this.file?.path || "";
+        const quote = `> ${text.replace(/\n/g, '\n> ')}\n\n[Reference](${encodeURI(`obsidian://xreader?path=${bookPath}&cfi=${cfiRange}`)})`;
+
+        navigator.clipboard.writeText(quote).then(() => {
+            // @ts-ignore
+            new Notice("Quote copied to clipboard!");
+
+            if (this.rendition) {
+                this.rendition.annotations.add("highlight", cfiRange, {}, (e: any) => {
+                    console.log("highlight clicked", e.target);
+                }, "hl", { "fill": "yellow", "fill-opacity": "0.3" });
+            }
+
+            // Clear selection in the UI
+            this.currentSelection = null;
+            if (this.rendition) {
+                // @ts-ignore
+                const win = this.rendition.manager.container.querySelector('iframe').contentWindow;
+                win.getSelection()?.removeAllRanges();
+            }
+        });
+    }
+
 
     async showTOC() {
         if (!this.book || !this.book.navigation) return;
@@ -257,42 +290,16 @@ export class XReaderView extends FileView {
 
             // Listen to selection
             this.rendition.on("selected", (cfiRange: string, contents: any) => {
-                const range = contents.range(cfiRange);
                 const selection = contents.window.getSelection();
                 const selectedText = selection.toString();
 
                 if (selectedText) {
-                    // Create a small floating button/menu near the selection
-                    const rect = range.getBoundingClientRect();
-                    const menu = document.body.createDiv({ cls: 'xreader-selection-menu' });
-                    menu.style.position = 'fixed';
-                    menu.style.top = `${rect.top - 40}px`;
-                    menu.style.left = `${rect.left + rect.width / 2 - 50}px`;
-                    menu.style.zIndex = '1000';
-
-                    const copyBtn = menu.createEl('button', { text: 'Copy as Quote', cls: 'mod-cta' });
-                    copyBtn.onclick = () => {
-                        const bookPath = this.file?.path || "";
-                        const quote = `> ${selectedText.replace(/\n/g, '\n> ')}\n\n[Reference](${encodeURI(`obsidian://xreader?path=${bookPath}&cfi=${cfiRange}`)})`;
-
-                        navigator.clipboard.writeText(quote).then(() => {
-                            // @ts-ignore
-                            new Notice("Quote copied to clipboard!");
-                            menu.remove();
-                            this.rendition?.annotations.add("highlight", cfiRange, {}, (e: any) => {
-                                console.log("highlight clicked", e.target);
-                            }, "hl", { "fill": "yellow", "fill-opacity": "0.3" });
-                        });
+                    this.currentSelection = {
+                        cfiRange: cfiRange,
+                        text: selectedText
                     };
-
-                    // Remove menu when clicking elsewhere
-                    const removeMenu = (e: MouseEvent) => {
-                        if (!menu.contains(e.target as Node)) {
-                            menu.remove();
-                            document.removeEventListener('mousedown', removeMenu);
-                        }
-                    };
-                    document.addEventListener('mousedown', removeMenu);
+                } else {
+                    this.currentSelection = null;
                 }
             });
 
