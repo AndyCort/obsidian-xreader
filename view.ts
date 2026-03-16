@@ -38,11 +38,14 @@ export class XReaderView extends FileView {
 
         const { cfiRange, text } = this.currentSelection;
         const bookPath = this.file?.path || "";
+        const vaultName = this.app.vault.getName();
 
+        const encodedVault = encodeURIComponent(vaultName);
         const encodedPath = encodeURIComponent(bookPath);
         const encodedCfi = encodeURIComponent(cfiRange);
 
-        const quote = `> ${text.replace(/\n/g, '\n> ')}\n\n[Reference](obsidian://xreader?path=${encodedPath}&cfi=${encodedCfi})`;
+        // Renaming 'path' to 'bookPath' to avoid conflict with Obsidian's internal URI handler
+        const quote = `> ${text.replace(/\n/g, '\n> ')}\n\n[Reference](obsidian://xreader?vault=${encodedVault}&bookPath=${encodedPath}&cfi=${encodedCfi})`;
 
         navigator.clipboard.writeText(quote).then(() => {
             // @ts-ignore
